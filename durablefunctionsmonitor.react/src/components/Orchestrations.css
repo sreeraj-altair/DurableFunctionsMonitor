@@ -89,6 +89,14 @@
     padding-top: 26px;
 }
 
+.toolbar-grid4 {
+    width: auto !important;
+}
+
+.toolbar-grid4-item2 {
+    padding-top: 26px;
+}
+
 .toolbar-runtime-status-group {
     margin-left: 30px;
     margin-right: 30px;

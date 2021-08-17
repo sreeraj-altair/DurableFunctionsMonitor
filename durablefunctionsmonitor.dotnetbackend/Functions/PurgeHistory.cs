@@ -10,6 +10,8 @@ using DurableTask.Core;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Extensions.Logging;
 using System.Threading;
+using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Blob;
 
 namespace DurableFunctionsMonitor.DotNetBackend
 {
@@ -60,6 +62,85 @@ namespace DurableFunctionsMonitor.DotNetBackend
                     DateTime.Parse(request.TimeTill), request.Statuses);
 
             return result.ToJsonContentResult();
+        }
+
+
+        [FunctionName(nameof(DfmPurgeQuoteContextFunction))]
+        public static async Task<IActionResult> DfmPurgeQuoteContextFunction(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = Globals.ApiRoutePrefix + "/purge-quote-context")] HttpRequest req,
+            [DurableClient(TaskHub = Globals.TaskHubRouteParamName)] IDurableClient durableClient,
+            ILogger log
+            )
+        {
+            //Checking that the call is authenticated properly
+            try
+            {
+                await Auth.ValidateIdentityAsync(req.HttpContext.User, req.Headers, durableClient.TaskHubName);
+            }
+            catch (Exception ex)
+            {
+                log.LogError(ex, "Failed to authenticate request");
+                return new UnauthorizedResult();
+            }
+
+
+            string connectionString = Environment.GetEnvironmentVariable(EnvVariableNames.AzureWebJobsStorage);
+            var blobClient = CloudStorageAccount.Parse(connectionString).CreateCloudBlobClient();
+            
+            // Delete the container
+            var container = blobClient.GetContainerReference("quotecontext");
+            await container.DeleteAsync();
+
+            Thread.Sleep(40000);
+
+            // Create the container again 
+            var newContainer = blobClient.GetContainerReference("quotecontext");
+            bool result = await newContainer.CreateIfNotExistsAsync();
+            if (result)
+            {
+                return new OkResult();
+            }
+
+            return new BadRequestResult();
+        }
+
+        [FunctionName(nameof(DfmPurgeDocGenerationContextFunction))]
+        public static async Task<IActionResult> DfmPurgeDocGenerationContextFunction(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = Globals.ApiRoutePrefix + "/purge-docgen-context")] HttpRequest req,
+            [DurableClient(TaskHub = Globals.TaskHubRouteParamName)] IDurableClient durableClient,
+            ILogger log
+            )
+        {
+            //Checking that the call is authenticated properly
+            try
+            {
+                await Auth.ValidateIdentityAsync(req.HttpContext.User, req.Headers, durableClient.TaskHubName);
+            }
+            catch (Exception ex)
+            {
+                log.LogError(ex, "Failed to authenticate request");
+                return new UnauthorizedResult();
+            }
+
+
+            string connectionString = Environment.GetEnvironmentVariable(EnvVariableNames.AzureWebJobsStorage);
+            var blobClient = CloudStorageAccount.Parse(connectionString).CreateCloudBlobClient();
+
+            // Delete the container
+            var container = blobClient.GetContainerReference("docgeneration");
+            await container.DeleteAsync();
+
+            Thread.Sleep(40000);
+
+            // Create the container again 
+            var newContainer = blobClient.GetContainerReference("docgeneration");
+            bool result = await newContainer.CreateIfNotExistsAsync();
+            if (result)
+            {
+                return new OkResult();
+            }
+
+            return new BadRequestResult();
         }
 
         private static Task<PurgeHistoryResult> PurgeOrchestrationsHistory(

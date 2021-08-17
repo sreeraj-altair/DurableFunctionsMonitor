@@ -113,7 +113,7 @@ export class OrchestrationsState extends ErrorMessageState {
         this._timeRange = TimeRangeEnum.Custom;
         this.listState.resetOrderBy();
     }
-    
+
     @computed
     get timeTillEnabled(): boolean { return !!this._timeTill; }
     set timeTillEnabled(val: boolean) {
@@ -131,7 +131,7 @@ export class OrchestrationsState extends ErrorMessageState {
     set timeRange(val: TimeRangeEnum) {
 
         this.menuAnchorElement = undefined;
-        
+
         this._timeRange = val;
 
         this.listState.resetOrderBy();
@@ -148,7 +148,7 @@ export class OrchestrationsState extends ErrorMessageState {
     @computed
     get filterOperator(): FilterOperatorEnum { return this._filterOperator; }
     set filterOperator(val: FilterOperatorEnum) {
-        
+
         this._filterOperator = val;
 
         if (!!this._filterValue && this._filteredColumn !== '0') {
@@ -176,7 +176,7 @@ export class OrchestrationsState extends ErrorMessageState {
 
     @computed
     get showStatuses(): RuntimeStatusOrDurableEntities[] { return this._showStatuses; }
-    
+
     isStatusChecked(status?: RuntimeStatusOrDurableEntities): boolean {
 
         if (!status) {
@@ -202,7 +202,7 @@ export class OrchestrationsState extends ErrorMessageState {
                 }
                 this._showStatuses.push(status);
             }
-            
+
         } else {
 
             if (!status) {
@@ -226,7 +226,7 @@ export class OrchestrationsState extends ErrorMessageState {
     }
 
     rescheduleDelayedRefresh() {
-        
+
         if (!!this._refreshToken) {
             clearTimeout(this._refreshToken);
             this._refreshToken = setTimeout(() => this.reloadOrchestrations(), this._delayedRefreshDelay);
@@ -238,14 +238,14 @@ export class OrchestrationsState extends ErrorMessageState {
         // Only showing lastEvent field when being filtered by it (because otherwise it is not populated on the server)
         return this._filteredColumn === 'lastEvent' && (!!this._oldFilterValue);
     }
-    
+
     get backendClient(): IBackendClient { return this._backendClient; }
 
     get isFunctionGraphAvailable(): boolean { return this._isFunctionGraphAvailable; }
 
     constructor(private _isFunctionGraphAvailable: boolean, private _backendClient: IBackendClient, private _localStorage: ITypedLocalStorage<OrchestrationsState & ResultsListTabState>) {
         super();
-        
+
         this._tabStates = [
             new ResultsListTabState(this._backendClient, this._localStorage, () => this.reloadOrchestrations()),
             new ResultsHistogramTabState(this._backendClient, this),
@@ -267,7 +267,7 @@ export class OrchestrationsState extends ErrorMessageState {
 
         this._timeFrom = momentFrom;
         this._oldTimeFrom = momentFrom;
-       
+
         const timeTillString = this._localStorage.getItem('timeTill');
         if (!!timeTillString) {
             this._timeTill = moment(timeTillString);
@@ -280,7 +280,7 @@ export class OrchestrationsState extends ErrorMessageState {
             // timeRange and [timeFrom,timeTill] are mutually exclusive.
             // So when the latter comes from query string, we should not pay attention to the former.
             const queryString = new QueryString();
-            if (!queryString.values['timeFrom'] && !queryString.values['timeTill']) {   
+            if (!queryString.values['timeFrom'] && !queryString.values['timeTill']) {
                 this._timeRange = TimeRangeEnum[timeRangeString];
             }
         }
@@ -305,7 +305,7 @@ export class OrchestrationsState extends ErrorMessageState {
         if (!!showStatusesString) {
             this._showStatuses = JSON.parse(showStatusesString);
         }
-        
+
         const autoRefreshString = this._localStorage.getItem('autoRefresh');
         if (!!autoRefreshString) {
             this._autoRefresh = Number(autoRefreshString);
@@ -360,7 +360,7 @@ export class OrchestrationsState extends ErrorMessageState {
 
         // persisting state as a batch
         this._localStorage.setItems([
-            { fieldName: 'timeFrom', value: !this._timeRange ? this._timeFrom.toISOString(): null },
+            { fieldName: 'timeFrom', value: !this._timeRange ? this._timeFrom.toISOString() : null },
             { fieldName: 'timeTill', value: (!!this._timeTill && !this._timeRange) ? this._timeTill.toISOString() : null },
             { fieldName: 'timeRange', value: !!this._timeRange ? TimeRangeEnum[this._timeRange] : null },
             { fieldName: 'filteredColumn', value: this._filteredColumn },
@@ -385,17 +385,17 @@ export class OrchestrationsState extends ErrorMessageState {
 
         const cancelToken = this._cancelToken;
         if (!!cancelToken.inProgress) {
-            return;            
+            return;
         }
         cancelToken.inProgress = true;
-        
+
         var filterClause = `&$filter=createdTime ge '${this.timeFrom.toISOString()}' and createdTime le '${this.timeTill.toISOString()}'`;
-        
+
         if (!!this._showStatuses) {
 
             filterClause += ` and runtimeStatus in (${this._showStatuses.map(s => `'${s}'`).join(',')})`;
         }
-        
+
         if (!!this._filterValue && this._filteredColumn !== '0') {
 
             filterClause += ' and ';
@@ -405,13 +405,13 @@ export class OrchestrationsState extends ErrorMessageState {
             switch (this._filterOperator) {
                 case FilterOperatorEnum.Equals:
                     filterClause += `${this._filteredColumn} eq '${encodedFilterValue}'`;
-                break;
+                    break;
                 case FilterOperatorEnum.StartsWith:
                     filterClause += `startswith(${this._filteredColumn}, '${encodedFilterValue}')`;
-                break;
+                    break;
                 case FilterOperatorEnum.Contains:
                     filterClause += `contains(${this._filteredColumn}, '${encodedFilterValue}')`;
-                break;
+                    break;
                 case FilterOperatorEnum.NotEquals:
                     filterClause += `${this._filteredColumn} ne '${encodedFilterValue}'`;
                     break;
@@ -448,7 +448,39 @@ export class OrchestrationsState extends ErrorMessageState {
             if (!cancelToken.isCancelled) {
                 this.errorMessage = `Load failed: ${err.message}.${(!!err.response ? err.response.data : '')} `;
             }
-                
+
+        }).finally(() => {
+            cancelToken.inProgress = false;
+        });
+    }
+
+    purgeQuoteContext() {
+        const cancelToken = this._cancelToken;
+        if (!!cancelToken.inProgress) {
+            return;
+        }
+        cancelToken.inProgress = true;
+
+        this._backendClient.call('GET', '/purge-quote-context').then(response => {
+            console.log("purge success");
+        }, err => {
+            this.errorMessage = "Purge quote context failed";
+        }).finally(() => {
+            cancelToken.inProgress = false;
+        });
+    }
+
+    purgeDocGenerationContext() {
+        const cancelToken = this._cancelToken;
+        if (!!cancelToken.inProgress) {
+            return;
+        }
+        cancelToken.inProgress = true;
+
+        this._backendClient.call('GET', '/purge-docgen-context').then(response => {
+            console.log("purge docgen success");
+        }, err => {
+            this.errorMessage = "Purge docgen context failed";
         }).finally(() => {
             cancelToken.inProgress = false;
         });

@@ -45,12 +45,12 @@ export class Orchestrations extends React.Component<{ state: OrchestrationsState
 
             const state = this.props.state;
 
-            if (state.tabIndex !== ResultsTabEnum.List ) {
+            if (state.tabIndex !== ResultsTabEnum.List) {
                 return;
             }
 
             const scrollingElement = (evt.target as Document).scrollingElement;
-            if (!scrollingElement) { 
+            if (!scrollingElement) {
                 return;
             }
 
@@ -101,7 +101,7 @@ export class Orchestrations extends React.Component<{ state: OrchestrationsState
                 <MenuItem onClick={() => state.timeRange = TimeRangeEnum.Last90Days}>Last 90 Days</MenuItem>
                 <MenuItem onClick={() => state.timeRange = TimeRangeEnum.Custom}>Custom</MenuItem>
             </Menu>
-            
+
             <AppBar color="inherit" position="static" className="top-appbar">
 
                 {state.inProgress ? (<LinearProgress />) : (<Box height={4} />)}
@@ -114,9 +114,9 @@ export class Orchestrations extends React.Component<{ state: OrchestrationsState
                             <Button size="small" variant="outlined" className="time-period-menu-drop-btn"
                                 onClick={evt => state.menuAnchorElement = evt.currentTarget}
                             >
-                                <ArrowDropDownIcon/>
+                                <ArrowDropDownIcon />
                             </Button>
-                            
+
                             {!!state.timeRange ? (
                                 <TextField
                                     className="from-input"
@@ -185,7 +185,7 @@ export class Orchestrations extends React.Component<{ state: OrchestrationsState
                                 )}
 
                             </>)}
-                            
+
                         </Grid>
                     </Grid>
 
@@ -270,6 +270,21 @@ export class Orchestrations extends React.Component<{ state: OrchestrationsState
 
                     <Typography style={{ flex: 1 }} />
 
+                    <Grid container className="toolbar-grid4">
+                        <Grid item xs={12}>
+                            <Button onClick={() => state.purgeDocGenerationContext()} color="primary">
+                                Purge Doc Generation Context
+                            </Button>
+                        </Grid>
+                        <Grid item xs={12}>
+                            <Button onClick={() => state.purgeQuoteContext()} color="secondary">
+                                Purge Quote Context
+                            </Button>
+                        </Grid>
+                    </Grid>
+
+
+
                     <Grid container className="toolbar-grid3">
                         <Grid item xs={12}>
                             <FormControl className="form-control-float-right">
@@ -313,7 +328,7 @@ export class Orchestrations extends React.Component<{ state: OrchestrationsState
                     {!!state.isFunctionGraphAvailable && (
                         <Tab className="tab-buttons" disabled={state.inProgress} label={<Typography color="textPrimary" variant="subtitle2">Functions Graph</Typography>} />
                     )}
-                    
+
                 </Tabs>
             </AppBar>
 
@@ -322,19 +337,19 @@ export class Orchestrations extends React.Component<{ state: OrchestrationsState
                 <OrchestrationsList state={listState} showLastEventColumn={state.showLastEventColumn} backendClient={state.backendClient} />
 
                 {state.inProgress && !!listState.orchestrations.length ? (<LinearProgress />) : (<Box height={4} />)}
-                
+
             </>)}
 
             {state.tabIndex === ResultsTabEnum.Histogram &&
                 (<OrchestrationsHistogram state={histogramState} />)
             }
-            
+
             {state.tabIndex === ResultsTabEnum.Gantt &&
                 (<OrchestrationsGanttChart
                     state={ganttChartState}
                     inProgress={state.inProgress}
-                    fileName={`gantt-chart-${state.timeFrom.format('YYYY-MM-DD-HH-mm-ss')}-${state.timeTill.format('YYYY-MM-DD-HH-mm-ss')}`} 
-                    backendClient={state.backendClient} 
+                    fileName={`gantt-chart-${state.timeFrom.format('YYYY-MM-DD-HH-mm-ss')}-${state.timeTill.format('YYYY-MM-DD-HH-mm-ss')}`}
+                    backendClient={state.backendClient}
                 />)
             }
 
@@ -342,15 +357,15 @@ export class Orchestrations extends React.Component<{ state: OrchestrationsState
                 (<OrchestrationsFunctionGraph
                     state={functionGraphState}
                     inProgress={state.inProgress}
-                    fileName={`function-graph-${state.timeFrom.format('YYYY-MM-DD-HH-mm-ss')}-${state.timeTill.format('YYYY-MM-DD-HH-mm-ss')}`} 
-                    backendClient={state.backendClient} 
+                    fileName={`function-graph-${state.timeFrom.format('YYYY-MM-DD-HH-mm-ss')}-${state.timeTill.format('YYYY-MM-DD-HH-mm-ss')}`}
+                    backendClient={state.backendClient}
                 />)
             }
-                
+
             <Toolbar variant="dense" />
-            
+
             <ErrorMessage state={this.props.state} />
-            
+
         </>);
     }
 
